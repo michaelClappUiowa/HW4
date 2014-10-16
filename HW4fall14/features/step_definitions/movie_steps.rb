@@ -51,28 +51,70 @@ end
 
 Given /the following movies have been added to RottenPotatoes:/ do |movies_table|
   movies_table.hashes.each do |movie|
-    # Each returned movie will be a hash representing one row of the movies_table
-    # The keys will be the table headers and the values will be the row contents.
-    # You should arrange to add that movie to the database here.
-    # You can add the entries directly to the databasse with ActiveRecord methodsQ
+	Movie.create(rating: movie['rating'], title: movie['title'], release_date: movie['release_date'])
   end
-  flunk "Unimplemented"
 end
 
 When /^I have opted to see movies rated: "(.*?)"$/ do |arg1|
-  # HINT: use String#split to split up the rating_list, then
+	allRating = ["G","R","PG-13","PG"]	
+	rating = arg1.delete(" ").split(",")
+	notrating = allRating - rating
+	rating.each do |r|
+		check("ratings_#{r}")
+	end
+	notrating.each do |r|
+		uncheck("ratings_#{r}")
+	end
+	click_button "ratings_submit"
+	# HINT: use String#split to split up the rating_list, then
   # iterate over the ratings and check/uncheck the ratings
   # using the appropriate Capybara command(s)
-  flunk "Unimplemented"
 end
 
 Then /^I should see only movies rated "(.*?)"$/ do |arg1|
-  flunk "Unimplemented" 
+  	result=true
+	allRating = ["G","R","PG-13","PG"]	
+	rating = arg1.delete(" ").split(",")
+	notrating = allRating - rating
+	Movie.all.each do |movie|
+		if notrating.include?(movie.rating)
+			if page.has_content?(movie.title)
+				result = false
+  				break
+ 			end
+		else
+			if not page.has_content?(movie.title)
+				result = false
+				break
+			end			
+		end   
+	end     
+assert result 
 end
 
 Then /^I should see all of the movies$/ do
-  flunk "Unimplemented"
+	val = Movie.count
+	val +=1
+	all("tr").count.should == val
 end
+
+When /^I have opted to sort alphabetically$/ do
+	click_on "Movie Title"
+end
+
+Then(/^I should see "(.*?)" before "(.*?)"$/) do |arg1, arg2|
+  	result = true
+	if (page.body =~ /#{arg1}/) > (page.body =~ /#{arg2}/)
+		result = false
+	end
+assert result
+end
+
+When /^I have opted to sort by date$/ do
+	click_on "Release Date"
+end
+
+
 
 
 
